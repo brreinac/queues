@@ -1,0 +1,64 @@
+composer create-project --prefer-dist laravel/laravel nombre-del-proyecto "9.*"
+cd nombre-del-proyecto
+
+.env
+QUEUE_CONNECTION=redis
+
+
+php artisan make:job ProcessMicroservice
+
+php artisan queue:work
+
+
+composer require laravel/horizon
+
+php artisan queue:batches-table
+php artisan migrate
+
+php artisan horizon:install
+php artisan migrate
+
+php artisan horizon
+
+php artisan queue:work
+
+
+php artisan tinker
+>>> ProcessMicroservice::dispatch(['field1' => 'test', 'field2' => 123]);
+
+Configurar Supervisord
+
+[program:horizon]
+process_name=%(program_name)s
+command=php /path/to/your/project/artisan horizon
+autostart=true
+autorestart=true
+user=your-username
+redirect_stderr=true
+stdout_logfile=/path/to/your/project/storage/logs/horizon.log
+
+
+supervisorctl reread
+supervisorctl update
+supervisorctl start horizon
+
+
+
+
+/microservice/process
+
+curl -X POST http://tudominio.com/api/microservice/process \
+-H "Content-Type: application/json" \
+-d '{
+    "field1": "valor1",
+    "field2": 123
+}'
+
+curl -X POST http://tudominio.com/api/microservice/process-batch \
+-H "Content-Type: application/json" \
+-d '{
+    "requests": [
+        {"field1": "valor1", "field2": 123},
+        {"field1": "valor2", "field2": 456}
+    ]
+}'
